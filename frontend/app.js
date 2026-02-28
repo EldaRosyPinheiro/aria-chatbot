@@ -2,7 +2,7 @@
    ARIA — Multilingual Voice Chatbot Frontend
    ───────────────────────────────────────────────────────────── */
 
-const API_BASE = "http://localhost:8000"; // Change to your deployed URL when hosting
+const API_BASE = "https://https-github-com-eldarosypinheiro-aria.onrender.com"; // Change to your deployed URL when hosting
 
 // ── State ──────────────────────────────────────────────────────
 let sessionId = null;
