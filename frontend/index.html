@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ARIA — Multilingual Voice Assistant</title>
+  <title>ARIA — Cropizide Voice Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -21,32 +24,42 @@
     <aside id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
-          <span class="logo-icon">◈</span>
+          <span class="logo-icon">🌱</span>
           <span class="logo-text">ARIA</span>
         </div>
-        <p class="logo-sub">Multilingual AI Assistant</p>
+        <p class="logo-sub">Cropizide Farm Assistant</p>
       </div>
 
-      <div class="lang-panel">
-        <p class="panel-label">🌍 Supported Languages</p>
-        <div class="lang-grid">
-          <span>English</span><span>മലയാളം</span><span>हिंदी</span>
-          <span>Español</span><span>Français</span><span>العربية</span>
-          <span>中文</span><span>日本語</span><span>한국어</span>
-          <span>Deutsch</span><span>Português</span><span>Русский</span>
-          <span>தமிழ்</span><span>తెలుగు</span><span>italiano</span>
+      <!-- Crop Context -->
+      <div class="context-panel" id="cropPanel">
+        <p class="panel-label">🌾 Active Crop</p>
+        <div id="cropInfo" class="context-info none">No crop selected</div>
+      </div>
+
+      <!-- Sensor Context -->
+      <div class="context-panel" id="sensorPanel">
+        <p class="panel-label">📡 Live Sensor Data</p>
+        <div id="sensorInfo" class="sensor-grid">
+          <div class="sensor-item" id="s-temp">🌡️ Temp<span>--</span></div>
+          <div class="sensor-item" id="s-hum">💧 Humidity<span>--</span></div>
+          <div class="sensor-item" id="s-soil">🌍 Soil Moisture<span>--</span></div>
+          <div class="sensor-item" id="s-soiltemp">🌡️ Soil Temp<span>--</span></div>
+          <div class="sensor-item" id="s-ph">⚗️ pH<span>--</span></div>
+          <div class="sensor-item" id="s-pressure">🔵 Pressure<span>--</span></div>
+          <div class="sensor-item" id="s-n">🟢 Nitrogen<span>--</span></div>
+          <div class="sensor-item" id="s-p">🟡 Phosphorus<span>--</span></div>
+          <div class="sensor-item" id="s-k">🔴 Potassium<span>--</span></div>
         </div>
-        <p class="lang-note">Just type or speak — ARIA detects your language automatically.</p>
+        <div id="sensorStatus" class="sensor-status">Connecting to Firebase...</div>
       </div>
 
       <div class="tips-panel">
         <p class="panel-label">💡 Tips</p>
         <ul>
-          <li>Select your language from the dropdown before speaking</li>
-          <li>Click 🎤 to speak in your language</li>
-          <li>ARIA replies in the same language</li>
+          <li>Select language → 🎤 Speak in Malayalam or English</li>
+          <li>ARIA reads your live sensor data</li>
+          <li>Ask about your crop's health</li>
           <li>Click 🔊 to replay any message</li>
-          <li>Click 🗑 to start a new chat</li>
         </ul>
       </div>
 
@@ -63,11 +76,11 @@
         <div class="header-info">
           <div class="avatar-ring">
             <div class="avatar-pulse"></div>
-            <span class="avatar-icon">◈</span>
+            <span class="avatar-icon">🌱</span>
           </div>
           <div>
             <h1>ARIA</h1>
-            <p id="aria-status">Ready to assist</p>
+            <p id="aria-status">Loading farm data...</p>
           </div>
         </div>
         <button id="clear-btn" title="New conversation">🗑</button>
@@ -84,7 +97,7 @@
         </div>
         <div id="input-row">
           <div id="input-wrapper">
-            <textarea id="user-input" placeholder="Type in any language, or select language and press 🎤 to speak…" rows="1"></textarea>
+            <textarea id="user-input" placeholder="Ask about your crops or farm in any language…" rows="1"></textarea>
           </div>
           <select id="lang-select" title="Select voice input language">
             <option value="ml-IN">🇮🇳 Malayalam</option>
@@ -92,13 +105,6 @@
             <option value="hi-IN">🇮🇳 Hindi</option>
             <option value="ta-IN">🇮🇳 Tamil</option>
             <option value="te-IN">🇮🇳 Telugu</option>
-            <option value="ar-SA">🇸🇦 Arabic</option>
-            <option value="fr-FR">🇫🇷 French</option>
-            <option value="de-DE">🇩🇪 German</option>
-            <option value="zh-CN">🇨🇳 Chinese</option>
-            <option value="ja-JP">🇯🇵 Japanese</option>
-            <option value="ko-KR">🇰🇷 Korean</option>
-            <option value="es-ES">🇪🇸 Spanish</option>
           </select>
           <button id="mic-btn" class="icon-btn" title="Voice input">🎤</button>
           <button id="send-btn" title="Send">
@@ -108,7 +114,7 @@
             </svg>
           </button>
         </div>
-        <p id="hint-text">🌐 Select language → 🎤 Speak → ARIA replies in your language · ⚡ Powered by Groq + Llama 3.3</p>
+        <p id="hint-text">🌾 Crop-aware · 📡 Live sensor data · 🌍 Multilingual · ⚡ Groq + Llama 3.3</p>
       </div>
     </main>
   </div>

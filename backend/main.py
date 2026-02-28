@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from groq import Groq
 from gtts import gTTS
 from dotenv import load_dotenv
+from typing import Optional
 import os
 import uuid
 import io
@@ -12,7 +13,7 @@ import re
 
 load_dotenv()
 
-app = FastAPI(title="Multilingual Voice Chatbot API")
+app = FastAPI(title="ARIA — Cropizide Voice Assistant")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,22 +27,74 @@ client = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 # In-memory session store
 sessions: dict = {}
 
-SYSTEM_PROMPT = """You are ARIA — a warm, intelligent multilingual voice assistant.
+# ── System Prompt ──────────────────────────────────────────────
+def build_system_prompt(active_crop: dict = None, sensor_data: dict = None) -> str:
+    crop_context = ""
+    sensor_context = ""
 
-Rules:
-1. ALWAYS detect the language the user writes or speaks in.
-2. ALWAYS reply in the EXACT same language the user used.
-3. Be concise, friendly, and helpful.
-4. If the user switches language mid-conversation, switch too.
-5. You support all world languages including English, Spanish, French, German, Hindi, Arabic, Chinese, Japanese, Korean, Portuguese, Russian, Malayalam, Tamil, Telugu, and many more.
-6. Keep responses conversational and clear — they will be read aloud via text-to-speech.
+    if active_crop:
+        crop_context = f"""
+ACTIVE CROP INFORMATION:
+- Crop Name: {active_crop.get('name', 'Unknown')}
+- Crop Type: {active_crop.get('type', 'Unknown')}
+- Growth Stage: {active_crop.get('stage', 'Unknown')}
+- Planting Date: {active_crop.get('plantingDate', 'Unknown')}
+- Additional Info: {active_crop.get('notes', 'None')}
 """
+    else:
+        crop_context = "\nNo active crop selected by the user.\n"
 
+    if sensor_data:
+        sensor_context = f"""
+LIVE SENSOR DATA (from field):
+- Temperature: {sensor_data.get('temperature', 'N/A')} °C
+- Humidity: {sensor_data.get('humidity', 'N/A')} %
+- Soil Moisture: {sensor_data.get('soilMoisture', sensor_data.get('soil_moisture', 'N/A'))} %
+- Soil Temperature: {sensor_data.get('soilTemperature', sensor_data.get('soil_temp', 'N/A'))} °C
+- pH Level: {sensor_data.get('ph', sensor_data.get('pH', 'N/A'))}
+- Atmospheric Pressure: {sensor_data.get('pressure', 'N/A')} hPa
+- Nitrogen (N): {sensor_data.get('nitrogen', sensor_data.get('N', 'N/A'))} mg/kg
+- Phosphorus (P): {sensor_data.get('phosphorus', sensor_data.get('P', 'N/A'))} mg/kg
+- Potassium (K): {sensor_data.get('potassium', sensor_data.get('K', 'N/A'))} mg/kg
+"""
+    else:
+        sensor_context = "\nNo live sensor data available.\n"
+
+    return f"""You are ARIA — the intelligent farming assistant for Cropizide, a smart agriculture platform.
+
+You are an expert in:
+- Crop cultivation, farming techniques, and best practices
+- Soil health, fertilizers, irrigation, and pest management
+- Interpreting sensor data (temperature, humidity, soil moisture, pH, NPK levels, pressure)
+- Giving specific advice based on real-time field conditions
+- Kerala farming, Indian agriculture, and tropical crops
+
+{crop_context}
+{sensor_context}
+
+INSTRUCTIONS:
+1. ALWAYS detect the language the user writes or speaks in.
+2. ALWAYS reply in the EXACT same language the user used (Malayalam or English or any other).
+3. When sensor data is available, USE IT to give specific, actionable advice.
+4. When crop info is available, tailor your answers specifically for that crop.
+5. If sensor values are abnormal (e.g. low soil moisture, wrong pH), WARN the farmer and suggest fixes.
+6. Be concise, friendly, and practical — like a knowledgeable farming expert.
+7. Keep responses clear for text-to-speech reading.
+8. Always prioritize the farmer's crop health and yield.
+
+Examples of specific advice:
+- If soil moisture is low → suggest irrigation immediately
+- If pH is too acidic/alkaline → suggest lime or sulfur treatment
+- If temperature is too high → suggest mulching or shade nets
+- If NPK is low → recommend specific fertilizers
+"""
 
 # ── Models ─────────────────────────────────────────────────────
 class ChatRequest(BaseModel):
     session_id: str
     message: str
+    active_crop: Optional[dict] = None
+    sensor_data: Optional[dict] = None
 
 class TTSRequest(BaseModel):
     text: str
@@ -51,7 +104,11 @@ class TTSRequest(BaseModel):
 @app.get("/session")
 def create_session():
     sid = str(uuid.uuid4())
-    sessions[sid] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    sessions[sid] = {
+        "history": [],
+        "active_crop": None,
+        "sensor_data": None
+    }
     return {"session_id": sid}
 
 
@@ -61,20 +118,42 @@ async def chat(req: ChatRequest):
     sid = req.session_id
 
     if sid not in sessions:
-        sessions[sid] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        sessions[sid] = {
+            "history": [],
+            "active_crop": None,
+            "sensor_data": None
+        }
 
-    sessions[sid].append({"role": "user", "content": req.message})
+    # Update context with latest crop and sensor data from frontend
+    if req.active_crop:
+        sessions[sid]["active_crop"] = req.active_crop
+    if req.sensor_data:
+        sessions[sid]["sensor_data"] = req.sensor_data
+
+    active_crop  = sessions[sid].get("active_crop")
+    sensor_data  = sessions[sid].get("sensor_data")
+
+    # Build system prompt with crop + sensor context
+    system_prompt = build_system_prompt(active_crop, sensor_data)
+
+    # Build messages list
+    messages = [{"role": "system", "content": system_prompt}]
+    messages += sessions[sid]["history"][-12:]  # last 12 messages for context
+    messages.append({"role": "user", "content": req.message})
 
     try:
         response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
-            messages=sessions[sid],
+            messages=messages,
             max_tokens=1024,
             temperature=0.7,
         )
 
         reply = response.choices[0].message.content
-        sessions[sid].append({"role": "assistant", "content": reply})
+
+        # Save to history
+        sessions[sid]["history"].append({"role": "user", "content": req.message})
+        sessions[sid]["history"].append({"role": "assistant", "content": reply})
 
         return {
             "reply": reply,
@@ -104,7 +183,7 @@ def detect_language(text: str) -> str:
     if re.search(r'[\u3040-\u30FF]', text): return 'ja'  # Japanese
     if re.search(r'[\uAC00-\uD7AF]', text): return 'ko'  # Korean
     if re.search(r'[\u4E00-\u9FFF]', text): return 'zh'  # Chinese
-    return 'en'  # Default English
+    return 'en'
 
 
 # ── Text to Speech ─────────────────────────────────────────────

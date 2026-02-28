@@ -4,11 +4,19 @@
 
 const API_BASE = "https://https-github-com-eldarosypinheiro-aria.onrender.com"; // Change to your deployed URL when hosting
 
+// ── Firebase Config (from your Cropizide app) ─────────────────
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
+  databaseURL: "https://sensor-datas-c8ff3-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
 
 // ── State ──────────────────────────────────────────────────────
-let sessionId = null;
-let isListening = false;
-let recognition = null;
+let sessionId    = null;
+let isListening  = false;
+let recognition  = null;
+let activeCrop   = null;
+let sensorData   = null;
+let database     = null;
 
 // ── DOM Refs ───────────────────────────────────────────────────
 const chatBox       = document.getElementById("chat-box");
@@ -27,8 +35,117 @@ const langSelect    = document.getElementById("lang-select");
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
   setupSpeechRecognition();
+  initFirebase();
+  loadActiveCrop();
   await createSession();
   showWelcome();
+}
+
+// ── Firebase Init ──────────────────────────────────────────────
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    database = firebase.database();
+    fetchSensorData();
+    // Live updates every time sensor data changes
+    database.ref('/sensor/history').orderByKey().limitToLast(1).on('value', (snap) => {
+      const data = snap.val();
+      if (data) {
+        const key = Object.keys(data)[0];
+        sensorData = data[key];
+        updateSensorUI(sensorData);
+        document.getElementById("sensorStatus").textContent = "✅ Live — updated just now";
+      }
+    });
+  } catch (e) {
+    console.error("Firebase error:", e);
+    document.getElementById("sensorStatus").textContent = "⚠️ Could not connect to Firebase";
+  }
+}
+
+async function fetchSensorData() {
+  try {
+    const snap = await database.ref('/sensor/history').orderByKey().limitToLast(1).once('value');
+    const data = snap.val();
+    if (data) {
+      const key = Object.keys(data)[0];
+      sensorData = data[key];
+      updateSensorUI(sensorData);
+      document.getElementById("sensorStatus").textContent = "✅ Live sensor connected";
+    } else {
+      document.getElementById("sensorStatus").textContent = "⚠️ No sensor data found";
+    }
+  } catch (e) {
+    console.error("Sensor fetch error:", e);
+    document.getElementById("sensorStatus").textContent = "⚠️ Firebase connection failed";
+  }
+}
+
+function updateSensorUI(data) {
+  if (!data) return;
+  const set = (id, key1, key2, unit) => {
+    const el = document.querySelector(`#${id} span`);
+    if (el) {
+      const val = data[key1] !== undefined ? data[key1] : (data[key2] !== undefined ? data[key2] : null);
+      el.textContent = val !== null ? `${val}${unit}` : "--";
+      // Color warnings
+      el.style.color = getWarningColor(key1, val);
+    }
+  };
+  set("s-temp",     "temperature",    "temp",         " °C");
+  set("s-hum",      "humidity",       "hum",          " %");
+  set("s-soil",     "soilMoisture",   "soil_moisture"," %");
+  set("s-soiltemp", "soilTemperature","soil_temp",    " °C");
+  set("s-ph",       "ph",             "pH",           "");
+  set("s-pressure", "pressure",       "pressure",     " hPa");
+  set("s-n",        "nitrogen",       "N",            " mg/kg");
+  set("s-p",        "phosphorus",     "P",            " mg/kg");
+  set("s-k",        "potassium",      "K",            " mg/kg");
+}
+
+function getWarningColor(key, val) {
+  if (val === null || val === undefined) return "";
+  const warnings = {
+    temperature:    { min: 10,  max: 40  },
+    humidity:       { min: 30,  max: 90  },
+    soilMoisture:   { min: 20,  max: 80  },
+    soilTemperature:{ min: 10,  max: 35  },
+    ph:             { min: 5.5, max: 7.5 },
+    nitrogen:       { min: 10,  max: 280 },
+    phosphorus:     { min: 5,   max: 200 },
+    potassium:      { min: 10,  max: 300 },
+  };
+  const range = warnings[key];
+  if (!range) return "#e8edf5";
+  if (val < range.min || val > range.max) return "#f87171"; // red = warning
+  return "#4ade80"; // green = normal
+}
+
+// ── Load Active Crop from localStorage ────────────────────────
+function loadActiveCrop() {
+  try {
+    activeCrop = JSON.parse(localStorage.getItem('activeCrop') || 'null');
+    updateCropUI();
+  } catch (e) {
+    activeCrop = null;
+  }
+}
+
+function updateCropUI() {
+  const cropInfo = document.getElementById("cropInfo");
+  if (activeCrop) {
+    cropInfo.className = "context-info active";
+    cropInfo.innerHTML = `
+      <div class="crop-name">🌱 ${activeCrop.name || 'Unknown Crop'}</div>
+      ${activeCrop.stage ? `<div class="crop-detail">Stage: ${activeCrop.stage}</div>` : ''}
+      ${activeCrop.type  ? `<div class="crop-detail">Type: ${activeCrop.type}</div>`   : ''}
+    `;
+  } else {
+    cropInfo.className = "context-info none";
+    cropInfo.textContent = "No active crop selected";
+  }
 }
 
 // ── Session ────────────────────────────────────────────────────
@@ -38,29 +155,47 @@ async function createSession() {
     const data = await res.json();
     sessionId = data.session_id;
     setStatus("online", "ARIA is online");
+    setAriaStatus("Ready to assist");
   } catch (e) {
     setStatus("error", "Can't connect to backend");
+    setAriaStatus("Backend offline");
     console.error("Session error:", e);
   }
 }
 
 // ── Welcome Screen ─────────────────────────────────────────────
 function showWelcome() {
-  const prompts = [
-    "നമസ്കാരം! നിങ്ങൾ ആരാണ്?",
-    "Hello! Who are you?",
-    "മലയാളത്തിൽ ഒരു കവിത എഴുതൂ",
-    "Translate 'Good morning' to Malayalam",
+  const cropName = activeCrop ? activeCrop.name : null;
+
+  const enPrompts = cropName ? [
+    `How is my ${cropName} doing based on sensor data?`,
+    `What fertilizer should I use for ${cropName}?`,
+    `Is the soil moisture good for ${cropName}?`,
+  ] : [
+    "What crops grow well in this weather?",
+    "How do I improve soil health?",
+    "What does my sensor data indicate?",
   ];
+
+  const mlPrompts = cropName ? [
+    `എന്റെ ${cropName} ഇപ്പോൾ എങ്ങനെ ഉണ്ട്?`,
+    `${cropName}ന് ഏത് വളം ഉപയോഗിക്കണം?`,
+  ] : [
+    "മണ്ണ് എങ്ങനെ മെച്ചപ്പെടുത്താം?",
+    "ഏത് വിള കൃഷി ചെയ്യണം?",
+  ];
+
+  const allPrompts = [...enPrompts.slice(0,2), ...mlPrompts.slice(0,2)];
 
   const el = document.createElement("div");
   el.className = "welcome-msg";
   el.innerHTML = `
-    <span class="big-icon">◈</span>
+    <span class="big-icon">🌾</span>
     <h2>Hello, I'm ARIA</h2>
-    <p>Your multilingual AI assistant. Select your language, then type or speak!</p>
+    <p>Your smart Cropizide farming assistant.<br>
+    I read your <strong>live sensor data</strong> and give crop-specific advice in your language.</p>
     <div class="quick-prompts">
-      ${prompts.map(p => `<button class="quick-btn" data-prompt="${p}">${p}</button>`).join("")}
+      ${allPrompts.map(p => `<button class="quick-btn" data-prompt="${p.replace(/"/g,'&quot;')}">${p}</button>`).join("")}
     </div>
   `;
   chatBox.appendChild(el);
@@ -83,13 +218,18 @@ async function sendMessage(text) {
   autoResizeTextarea();
 
   const typingId = appendTyping();
-  setAriaStatus("Thinking…");
+  setAriaStatus("Thinking...");
 
   try {
     const res = await fetch(`${API_BASE}/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: sessionId, message: text }),
+      body: JSON.stringify({
+        session_id:  sessionId,
+        message:     text,
+        active_crop: activeCrop,   // ← Send crop data
+        sensor_data: sensorData    // ← Send live sensor data
+      }),
     });
 
     const data = await res.json();
@@ -115,7 +255,7 @@ function appendMessage(role, text) {
   const wrap = document.createElement("div");
   wrap.className = `msg-wrap ${role}`;
 
-  const avatar = role === "bot" ? "◈" : "👤";
+  const avatar = role === "bot" ? "🌱" : "👤";
   const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   const speakBtn = role === "bot"
@@ -144,7 +284,7 @@ function appendTyping() {
   wrap.className = "msg-wrap bot";
   wrap.id = id;
   wrap.innerHTML = `
-    <div class="msg-avatar">◈</div>
+    <div class="msg-avatar">🌱</div>
     <div class="msg-content">
       <div class="msg-bubble typing-bubble">
         <div class="typing-dot"></div>
@@ -197,7 +337,7 @@ async function speakText(text) {
   }
 }
 
-// ── Speech Recognition (Voice Input) ──────────────────────────
+// ── Speech Recognition ─────────────────────────────────────────
 function setupSpeechRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
@@ -272,6 +412,8 @@ function escapeHtml(text) {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
     .replace(/\n/g, "<br>");
 }
 
@@ -297,7 +439,6 @@ micBtn.addEventListener("click", () => {
   if (isListening) {
     recognition.stop();
   } else {
-    // Set language from dropdown before starting
     recognition.lang = langSelect.value;
     recognition.start();
   }
