@@ -204,3 +204,4 @@ async def text_to_speech(req: TTSRequest):
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+    
