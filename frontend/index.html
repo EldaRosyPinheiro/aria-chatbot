@@ -30,10 +30,10 @@
       <div class="lang-panel">
         <p class="panel-label">🌍 Supported Languages</p>
         <div class="lang-grid">
-          <span>English</span><span>हिंदी</span><span>Español</span>
-          <span>Français</span><span>العربية</span><span>中文</span>
-          <span>日本語</span><span>한국어</span><span>Deutsch</span>
-          <span>Português</span><span>Русский</span><span>മലയാളം</span>
+          <span>English</span><span>മലയാളം</span><span>हिंदी</span>
+          <span>Español</span><span>Français</span><span>العربية</span>
+          <span>中文</span><span>日本語</span><span>한국어</span>
+          <span>Deutsch</span><span>Português</span><span>Русский</span>
           <span>தமிழ்</span><span>తెలుగు</span><span>italiano</span>
         </div>
         <p class="lang-note">Just type or speak — ARIA detects your language automatically.</p>
@@ -42,8 +42,9 @@
       <div class="tips-panel">
         <p class="panel-label">💡 Tips</p>
         <ul>
-          <li>Click 🎤 to speak in any language</li>
-          <li>ARIA replies in your language</li>
+          <li>Select your language from the dropdown before speaking</li>
+          <li>Click 🎤 to speak in your language</li>
+          <li>ARIA replies in the same language</li>
           <li>Click 🔊 to replay any message</li>
           <li>Click 🗑 to start a new chat</li>
         </ul>
@@ -72,9 +73,7 @@
         <button id="clear-btn" title="New conversation">🗑</button>
       </header>
 
-      <div id="chat-box">
-        <!-- Welcome message injected by JS -->
-      </div>
+      <div id="chat-box"></div>
 
       <div id="input-area">
         <div id="waveform" class="hidden">
@@ -85,8 +84,22 @@
         </div>
         <div id="input-row">
           <div id="input-wrapper">
-            <textarea id="user-input" placeholder="Type in any language, or press 🎤 to speak…" rows="1"></textarea>
+            <textarea id="user-input" placeholder="Type in any language, or select language and press 🎤 to speak…" rows="1"></textarea>
           </div>
+          <select id="lang-select" title="Select voice input language">
+            <option value="ml-IN">🇮🇳 Malayalam</option>
+            <option value="en-US">🇺🇸 English</option>
+            <option value="hi-IN">🇮🇳 Hindi</option>
+            <option value="ta-IN">🇮🇳 Tamil</option>
+            <option value="te-IN">🇮🇳 Telugu</option>
+            <option value="ar-SA">🇸🇦 Arabic</option>
+            <option value="fr-FR">🇫🇷 French</option>
+            <option value="de-DE">🇩🇪 German</option>
+            <option value="zh-CN">🇨🇳 Chinese</option>
+            <option value="ja-JP">🇯🇵 Japanese</option>
+            <option value="ko-KR">🇰🇷 Korean</option>
+            <option value="es-ES">🇪🇸 Spanish</option>
+          </select>
           <button id="mic-btn" class="icon-btn" title="Voice input">🎤</button>
           <button id="send-btn" title="Send">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -95,7 +108,7 @@
             </svg>
           </button>
         </div>
-        <p id="hint-text">🌐 Auto-detects language · 🔊 Speaks back · ⚡ Powered by Groq + Llama 3.3</p>
+        <p id="hint-text">🌐 Select language → 🎤 Speak → ARIA replies in your language · ⚡ Powered by Groq + Llama 3.3</p>
       </div>
     </main>
   </div>

@@ -4,6 +4,7 @@
 
 const API_BASE = "https://https-github-com-eldarosypinheiro-aria.onrender.com"; // Change to your deployed URL when hosting
 
+
 // ── State ──────────────────────────────────────────────────────
 let sessionId = null;
 let isListening = false;
@@ -21,6 +22,7 @@ const waveform      = document.getElementById("waveform");
 const ariaStatus    = document.getElementById("aria-status");
 const connStatus    = document.getElementById("conn-status");
 const statusDot     = document.getElementById("status-dot");
+const langSelect    = document.getElementById("lang-select");
 
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
@@ -45,10 +47,10 @@ async function createSession() {
 // ── Welcome Screen ─────────────────────────────────────────────
 function showWelcome() {
   const prompts = [
+    "നമസ്കാരം! നിങ്ങൾ ആരാണ്?",
     "Hello! Who are you?",
-    "നമസ്കാരം! നിങ്ങൾ മലയാളം സംസാരിക്കുമോ?",
-    "Translate 'Good morning' to French",
-    "¿Hablas español?",
+    "മലയാളത്തിൽ ഒരു കവിത എഴുതൂ",
+    "Translate 'Good morning' to Malayalam",
   ];
 
   const el = document.createElement("div");
@@ -56,7 +58,7 @@ function showWelcome() {
   el.innerHTML = `
     <span class="big-icon">◈</span>
     <h2>Hello, I'm ARIA</h2>
-    <p>Your multilingual AI assistant. I speak your language — just type or say something.</p>
+    <p>Your multilingual AI assistant. Select your language, then type or speak!</p>
     <div class="quick-prompts">
       ${prompts.map(p => `<button class="quick-btn" data-prompt="${p}">${p}</button>`).join("")}
     </div>
@@ -73,7 +75,6 @@ async function sendMessage(text) {
   text = text || userInput.value.trim();
   if (!text || !sessionId) return;
 
-  // Clear welcome
   const welcome = chatBox.querySelector(".welcome-msg");
   if (welcome) welcome.remove();
 
@@ -81,7 +82,6 @@ async function sendMessage(text) {
   userInput.value = "";
   autoResizeTextarea();
 
-  // Typing indicator
   const typingId = appendTyping();
   setAriaStatus("Thinking…");
 
@@ -167,7 +167,6 @@ function removeTyping(id) {
 async function speakText(text) {
   if (!text) return;
 
-  // Stop any current audio
   if (window._currentAudio) {
     window._currentAudio.pause();
     window._currentAudio = null;
@@ -192,7 +191,6 @@ async function speakText(text) {
 
   } catch (e) {
     console.error("TTS failed, using browser fallback:", e);
-    // Fallback to browser TTS
     const utterance = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.speak(utterance);
     setAriaStatus("Ready to assist");
@@ -204,7 +202,7 @@ function setupSpeechRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
     micBtn.disabled = true;
-    micBtn.title = "Voice input not supported in this browser. Use Chrome.";
+    micBtn.title = "Voice input not supported. Use Chrome.";
     micBtn.style.opacity = "0.4";
     return;
   }
@@ -212,14 +210,14 @@ function setupSpeechRecognition() {
   recognition = new SR();
   recognition.continuous = false;
   recognition.interimResults = false;
-  recognition.lang = ""; // auto-detect language
 
   recognition.onstart = () => {
     isListening = true;
     micBtn.classList.add("active");
     micBtn.textContent = "🔴";
     waveform.classList.remove("hidden");
-    setAriaStatus("Listening…");
+    const langName = langSelect.options[langSelect.selectedIndex].text;
+    setAriaStatus(`Listening in ${langName}…`);
   };
 
   recognition.onresult = (e) => {
@@ -232,7 +230,7 @@ function setupSpeechRecognition() {
     console.error("Speech error:", e.error);
     stopListening();
     if (e.error === "not-allowed") {
-      appendMessage("bot", "⚠️ Microphone access denied. Please allow mic permissions in your browser and try again.");
+      appendMessage("bot", "⚠️ Microphone access denied. Please allow mic permissions and try again.");
     }
   };
 
@@ -299,6 +297,8 @@ micBtn.addEventListener("click", () => {
   if (isListening) {
     recognition.stop();
   } else {
+    // Set language from dropdown before starting
+    recognition.lang = langSelect.value;
     recognition.start();
   }
 });

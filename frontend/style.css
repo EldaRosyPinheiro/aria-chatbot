@@ -312,3 +312,25 @@ html, body {
   #input-area { padding: 12px 16px 16px; }
   .msg-content { max-width: 85%; }
 }
+
+/* ─── Language Selector ────────────────────────────────────── */
+#lang-select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  padding: 0 10px;
+  height: 48px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+}
+#lang-select:focus {
+  border-color: rgba(0,229,255,0.4);
+}
+#lang-select option {
+  background: var(--surface2);
+  color: var(--text);
+}
