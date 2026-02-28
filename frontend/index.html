@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARIA — Multilingual Voice Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div id="app">
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span class="logo-icon">◈</span>
+          <span class="logo-text">ARIA</span>
+        </div>
+        <p class="logo-sub">Multilingual AI Assistant</p>
+      </div>
+
+      <div class="lang-panel">
+        <p class="panel-label">🌍 Supported Languages</p>
+        <div class="lang-grid">
+          <span>English</span><span>हिंदी</span><span>Español</span>
+          <span>Français</span><span>العربية</span><span>中文</span>
+          <span>日本語</span><span>한국어</span><span>Deutsch</span>
+          <span>Português</span><span>Русский</span><span>മലയാളം</span>
+          <span>தமிழ்</span><span>తెలుగు</span><span>italiano</span>
+        </div>
+        <p class="lang-note">Just type or speak — ARIA detects your language automatically.</p>
+      </div>
+
+      <div class="tips-panel">
+        <p class="panel-label">💡 Tips</p>
+        <ul>
+          <li>Click 🎤 to speak in any language</li>
+          <li>ARIA replies in your language</li>
+          <li>Click 🔊 to replay any message</li>
+          <li>Click 🗑 to start a new chat</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="status-dot" id="status-dot"></div>
+        <span id="conn-status">Connecting...</span>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <main id="chat-area">
+      <header id="chat-header">
+        <button id="sidebar-toggle" title="Toggle sidebar">☰</button>
+        <div class="header-info">
+          <div class="avatar-ring">
+            <div class="avatar-pulse"></div>
+            <span class="avatar-icon">◈</span>
+          </div>
+          <div>
+            <h1>ARIA</h1>
+            <p id="aria-status">Ready to assist</p>
+          </div>
+        </div>
+        <button id="clear-btn" title="New conversation">🗑</button>
+      </header>
+
+      <div id="chat-box">
+        <!-- Welcome message injected by JS -->
+      </div>
+
+      <div id="input-area">
+        <div id="waveform" class="hidden">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <div class="bar"></div><div class="bar"></div>
+          <span id="wave-label">Listening...</span>
+        </div>
+        <div id="input-row">
+          <div id="input-wrapper">
+            <textarea id="user-input" placeholder="Type in any language, or press 🎤 to speak…" rows="1"></textarea>
+          </div>
+          <button id="mic-btn" class="icon-btn" title="Voice input">🎤</button>
+          <button id="send-btn" title="Send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+        <p id="hint-text">🌐 Auto-detects language · 🔊 Speaks back · ⚡ Powered by Groq + Llama 3.3</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
