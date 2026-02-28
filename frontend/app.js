@@ -4,6 +4,7 @@
 
 const API_BASE = "https://https-github-com-eldarosypinheiro-aria.onrender.com"; // Change to your deployed URL when hosting
 
+
 // ── Firebase Config ────────────────────────────────────────────
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
