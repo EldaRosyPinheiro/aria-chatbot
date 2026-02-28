@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <link rel="stylesheet" href="style.css" />
@@ -20,7 +19,6 @@
   </div>
 
   <div id="app">
-    <!-- Sidebar -->
     <aside id="sidebar">
       <div class="sidebar-header">
         <div class="logo">
@@ -30,19 +28,17 @@
         <p class="logo-sub">Cropizide Farm Assistant</p>
       </div>
 
-      <!-- Crop Context -->
-      <div class="context-panel" id="cropPanel">
+      <div class="context-panel">
         <p class="panel-label">🌾 Active Crop</p>
         <div id="cropInfo" class="context-info none">No crop selected</div>
       </div>
 
-      <!-- Sensor Context -->
-      <div class="context-panel" id="sensorPanel">
+      <div class="context-panel">
         <p class="panel-label">📡 Live Sensor Data</p>
-        <div id="sensorInfo" class="sensor-grid">
+        <div class="sensor-grid">
           <div class="sensor-item" id="s-temp">🌡️ Temp<span>--</span></div>
           <div class="sensor-item" id="s-hum">💧 Humidity<span>--</span></div>
-          <div class="sensor-item" id="s-soil">🌍 Soil Moisture<span>--</span></div>
+          <div class="sensor-item" id="s-soil">🌍 Soil Moist.<span>--</span></div>
           <div class="sensor-item" id="s-soiltemp">🌡️ Soil Temp<span>--</span></div>
           <div class="sensor-item" id="s-ph">⚗️ pH<span>--</span></div>
           <div class="sensor-item" id="s-pressure">🔵 Pressure<span>--</span></div>
@@ -57,9 +53,10 @@
         <p class="panel-label">💡 Tips</p>
         <ul>
           <li>Select language → 🎤 Speak in Malayalam or English</li>
-          <li>ARIA reads your live sensor data</li>
-          <li>Ask about your crop's health</li>
-          <li>Click 🔊 to replay any message</li>
+          <li>ARIA reads your live sensor data automatically</li>
+          <li>Ask about your crop's health anytime</li>
+          <li>Click 🔊 on any message to replay audio</li>
+          <li>Click 🗑 to start a fresh conversation</li>
         </ul>
       </div>
 
@@ -69,10 +66,9 @@
       </div>
     </aside>
 
-    <!-- Main Chat Area -->
     <main id="chat-area">
       <header id="chat-header">
-        <button id="sidebar-toggle" title="Toggle sidebar">☰</button>
+        <button id="back-btn" title="Back to Cropizide" onclick="goBack()">← Back</button>
         <div class="header-info">
           <div class="avatar-ring">
             <div class="avatar-pulse"></div>
