@@ -90,43 +90,53 @@ LIVE SENSOR READINGS (from user's field right now):
     else:
         sensor_context = "\nNo live sensor data available.\n"
 
-    # ── Weather Data ──────────────────────────────────────────
-    if weather_data:
-        # weather_data may be a dict of dates or a list — handle both
-        weather_lines = []
+   # ── Weather Data ──────────────────────────────────────────────
+if weather_data:
+    historical = weather_data.get('historical') or {}
+    forecast   = weather_data.get('forecast')   or {}
+
+    def parse_entries(data, label):
+        lines = []
         try:
-            if isinstance(weather_data, dict):
-                for date_key, day_data in list(weather_data.items())[:7]:  # max 7 days
-                    if isinstance(day_data, dict):
-                        weather_lines.append(
-                            f"- {date_key}: "
-                            f"Temp {day_data.get('temperature', day_data.get('temp', day_data.get('max_temp', 'N/A')))}°C, "
-                            f"Humidity {day_data.get('humidity', 'N/A')}%, "
-                            f"Condition: {day_data.get('condition', day_data.get('description', day_data.get('weather', 'N/A')))}, "
-                            f"Rain: {day_data.get('rain', day_data.get('rainfall', day_data.get('precipitation', 'N/A')))} mm"
+            if isinstance(data, dict):
+                for key, val in list(data.items())[:5]:
+                    if isinstance(val, dict):
+                        lines.append(
+                            f"- {key}: "
+                            f"Temp {val.get('temperature', val.get('temp', val.get('max_temp', 'N/A')))}°C, "
+                            f"Humidity {val.get('humidity', 'N/A')}%, "
+                            f"Condition: {val.get('condition', val.get('description', val.get('weather', 'N/A')))}, "
+                            f"Rain: {val.get('rain', val.get('rainfall', val.get('precipitation', 'N/A')))} mm"
                         )
                     else:
-                        weather_lines.append(f"- {date_key}: {day_data}")
-            elif isinstance(weather_data, list):
-                for day in weather_data[:7]:
-                    if isinstance(day, dict):
-                        weather_lines.append(
-                            f"- {day.get('date', 'N/A')}: "
-                            f"Temp {day.get('temperature', day.get('temp', 'N/A'))}°C, "
-                            f"Humidity {day.get('humidity', 'N/A')}%, "
-                            f"Condition: {day.get('condition', day.get('description', 'N/A'))}, "
-                            f"Rain: {day.get('rain', day.get('rainfall', 'N/A'))} mm"
+                        lines.append(f"- {key}: {val}")
+            elif isinstance(data, list):
+                for item in data[:5]:
+                    if isinstance(item, dict):
+                        lines.append(
+                            f"- {item.get('date','N/A')}: "
+                            f"Temp {item.get('temperature', item.get('temp','N/A'))}°C, "
+                            f"Humidity {item.get('humidity','N/A')}%, "
+                            f"Condition: {item.get('condition', item.get('description','N/A'))}"
                         )
         except Exception:
-            weather_lines = ["Weather data could not be parsed"]
+            lines = [f"{label} data could not be parsed"]
+        return lines
 
-        weather_context = f"""
-WEATHER DATA (past and forecast for user's location):
-{chr(10).join(weather_lines) if weather_lines else 'No weather entries found'}
+    hist_lines = parse_entries(historical, "Historical")
+    fore_lines = parse_entries(forecast,   "Forecast")
+
+    weather_context = f"""
+WEATHER DATA:
+Past Weather:
+{chr(10).join(hist_lines) if hist_lines else '- No historical data'}
+
+Weather Forecast:
+{chr(10).join(fore_lines) if fore_lines else '- No forecast data'}
 """
-    else:
-        weather_context = "\nNo weather data available.\n"
-
+else:
+    weather_context = "\nNo weather data available.\n"
+    
     # ── Full Prompt ───────────────────────────────────────────
     return f"""You are ARIA — the intelligent farming assistant for Cropizide, a smart agriculture platform.
 
