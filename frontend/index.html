@@ -4,37 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ARIA — Cropizide Voice Assistant</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="bg-orbs">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="orb orb-3"></div>
-  </div>
 
   <div id="app">
+
+    <!-- ── SIDEBAR ── -->
     <aside id="sidebar">
+
       <div class="sidebar-header">
-        <div class="logo">
-          <span class="logo-icon">🌱</span>
-          <span class="logo-text">ARIA</span>
+        <div class="brand-logo">Cropizide</div>
+        <div class="aria-badge">
+          <span class="aria-dot"></span>
+          ARIA — Farm Assistant
         </div>
-        <p class="logo-sub">Cropizide Farm Assistant</p>
       </div>
 
-      <div class="context-panel">
-        <p class="panel-label">🌾 Active Crop</p>
+      <!-- Active Crop -->
+      <div class="side-panel">
+        <div class="panel-label">🌾 Active Crop</div>
         <div id="cropInfo" class="context-info none">No crop selected</div>
       </div>
 
-      <div class="context-panel">
-        <p class="panel-label">📡 Live Sensor Data</p>
+      <!-- Live Sensor -->
+      <div class="side-panel">
+        <div class="panel-label">📡 Live Sensor Data</div>
         <div class="sensor-grid">
           <div class="sensor-item" id="s-temp">🌡️ Temp<span>--</span></div>
           <div class="sensor-item" id="s-hum">💧 Humidity<span>--</span></div>
@@ -49,8 +46,9 @@
         <div id="sensorStatus" class="sensor-status">Connecting to Firebase...</div>
       </div>
 
-      <div class="tips-panel">
-        <p class="panel-label">💡 Tips</p>
+      <!-- Tips -->
+      <div class="side-panel tips-panel">
+        <div class="panel-label">💡 Tips</div>
         <ul>
           <li>Select language → 🎤 Speak in Malayalam or English</li>
           <li>ARIA reads your live sensor data automatically</li>
@@ -60,26 +58,35 @@
         </ul>
       </div>
 
+      <!-- Status -->
       <div class="sidebar-footer">
         <div class="status-dot" id="status-dot"></div>
         <span id="conn-status">Connecting...</span>
       </div>
+
     </aside>
 
+    <!-- ── MAIN CHAT ── -->
     <main id="chat-area">
+
       <header id="chat-header">
-        <button id="back-btn" title="Back to Cropizide" onclick="goBack()">← Back</button>
-        <div class="header-info">
-          <div class="avatar-ring">
-            <div class="avatar-pulse"></div>
-            <span class="avatar-icon">🌱</span>
+        <button id="back-btn" onclick="goBack()" title="Back to Cropizide">← Back</button>
+
+        <div class="header-center">
+          <div class="bot-avatar-ring">
+            <div class="ring-pulse"></div>
+            <span>🌱</span>
           </div>
           <div>
-            <h1>ARIA</h1>
-            <p id="aria-status">Loading farm data...</p>
+            <div class="header-title">ARIA</div>
+            <div class="header-sub" id="aria-status">Loading farm data...</div>
           </div>
         </div>
-        <button id="clear-btn" title="New conversation">🗑</button>
+
+        <div class="header-right">
+          <button id="sidebar-toggle" title="Toggle sidebar">☰</button>
+          <button id="clear-btn" title="New conversation">🗑</button>
+        </div>
       </header>
 
       <div id="chat-box"></div>
@@ -91,11 +98,12 @@
           <div class="bar"></div><div class="bar"></div>
           <span id="wave-label">Listening...</span>
         </div>
+
         <div id="input-row">
           <div id="input-wrapper">
             <textarea id="user-input" placeholder="Ask about your crops or farm in any language…" rows="1"></textarea>
           </div>
-          <select id="lang-select" title="Select voice input language">
+          <select id="lang-select" title="Select voice language">
             <option value="ml-IN">🇮🇳 Malayalam</option>
             <option value="en-US">🇺🇸 English</option>
             <option value="hi-IN">🇮🇳 Hindi</option>
@@ -110,8 +118,10 @@
             </svg>
           </button>
         </div>
+
         <p id="hint-text">🌾 Crop-aware · 📡 Live sensor data · 🌍 Multilingual · ⚡ Groq + Llama 3.3</p>
       </div>
+
     </main>
   </div>
 
