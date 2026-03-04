@@ -164,15 +164,6 @@ body::before {
   gap: 12px;
 }
 
-#back-btn {
-  padding: 9px 18px;
-  background: var(--glass-bg); backdrop-filter: blur(10px);
-  border: 1px solid var(--glass-border);
-  border-radius: 10px; color: var(--text);
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  transition: all 0.3s; white-space: nowrap;
-}
-#back-btn:hover { background: var(--glass-hover); transform: translateY(-1px); }
 
 .header-center {
   display: flex; align-items: center; gap: 12px;
