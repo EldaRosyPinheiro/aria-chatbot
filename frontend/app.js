@@ -158,14 +158,15 @@ function initFirebase() {
     });
 
     // ── Weather listener ───────────────────────────────────────
-    weatherDb.ref("/weather").once("value", (snap) => {
-      weatherData = snap.val();
-      if (weatherData) {
-        console.log("✅ Weather data loaded");
-      } else {
-        console.log("⚠️ No weather data found");
-      }
-    });
+   // ── Weather listener ───────────────────────────────────────────
+weatherDb.ref("/weather/data").once("value", (snap) => {
+  const historical = snap.val();
+  weatherDb.ref("/weather/forecast").once("value", (snap2) => {
+    const forecast = snap2.val();
+    weatherData = { historical, forecast };
+    console.log("✅ Weather loaded — historical:", !!historical, "forecast:", !!forecast);
+  });
+});
 
     // ── Load all crops from Firestore ──────────────────────────
     if (firestore) {
