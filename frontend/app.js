@@ -76,8 +76,10 @@ function updateCropUI() {
     cropInfo.className = "context-info active";
     cropInfo.innerHTML = `
       <div class="crop-name">🌱 ${activeCrop.name || "Unknown Crop"}</div>
-      ${activeCrop.stage ? `<div class="crop-detail">Stage: ${activeCrop.stage}</div>` : ""}
-      ${activeCrop.type  ? `<div class="crop-detail">Type: ${activeCrop.type}</div>`   : ""}
+      ${activeCrop.growthDuration ? `<div class="crop-detail">Growth Duration: ${activeCrop.growthDuration} days</div>` : ""}
+      ${activeCrop.activatedDate  ? `<div class="crop-detail">Started: ${new Date(activeCrop.activatedDate).toLocaleDateString()}</div>` : ""}
+      ${activeCrop.temperature    ? `<div class="crop-detail">Temp: ${activeCrop.temperature}</div>` : ""}
+      ${activeCrop.humidity       ? `<div class="crop-detail">Humidity: ${activeCrop.humidity}</div>` : ""}
     `;
   } else {
     cropInfo.className = "context-info none";
