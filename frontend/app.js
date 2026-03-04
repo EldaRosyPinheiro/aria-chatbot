@@ -124,15 +124,15 @@ function updateSensorUI(data) {
     el.style.color   = val !== null ? getWarningColor(key1, val) : "#6b7a99";
   };
 
-  set("s-temp",     "temperature",     "temp",          " °C");
-  set("s-hum",      "humidity",        "hum",           " %");
-  set("s-soil",     "soilMoisture",    "soil_moisture", " %");
-  set("s-soiltemp", "soilTemperature", "soil_temp",     " °C");
-  set("s-ph",       "ph",              "pH",            "");
-  set("s-pressure", "pressure",        "pressure",      " hPa");
-  set("s-n",        "nitrogen",        "N",             " mg/kg");
-  set("s-p",        "phosphorus",      "P",             " mg/kg");
-  set("s-k",        "potassium",       "K",             " mg/kg");
+  set("s-temp",     "air_temperature",          "temperature",   " °C");
+set("s-hum",      "humidity",                 "hum",           " %");
+set("s-soil",     "soil_moisture_percentage",  "soil_moisture", " %");
+set("s-soiltemp", "soil_temperature",          "soilTemp",      " °C");
+set("s-ph",       "ph",                        "pH",            "");
+set("s-pressure", "pressure",                  "atm_pressure",  " hPa");
+set("s-n",        "nitrogen",                  "N",             " mg/kg");
+set("s-p",        "phosphorus",                "P",             " mg/kg");
+set("s-k",        "potassium",                 "K",             " mg/kg");
 }
 
 // Returns green if normal, red if out of safe range
