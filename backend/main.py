@@ -33,28 +33,17 @@ def build_system_prompt(active_crop: dict = None, sensor_data: dict = None) -> s
     sensor_context = ""
 
     if active_crop:
-        crop_context = f"""
+    crop_context = f"""
 ACTIVE CROP INFORMATION:
 - Crop Name: {active_crop.get('name', 'Unknown')}
-- Crop Type: {active_crop.get('type', 'Unknown')}
-- Growth Stage: {active_crop.get('stage', 'Unknown')}
-- Planting Date: {active_crop.get('plantingDate', 'Unknown')}
-- Additional Info: {active_crop.get('notes', 'None')}
-"""
-    else:
-        crop_context = "\nNo active crop selected by the user.\n"
+- Growth Duration: {active_crop.get('growthDuration', 'Unknown')} days
+- Activated Date: {active_crop.get('activatedDate', 'Unknown')}
+- Required Temperature: {active_crop.get('temperature', 'Unknown')}
+- Required Humidity: {active_crop.get('humidity', 'Unknown')}
+- Nitrogen Required: {active_crop.get('nitrogen_min', 'N/A')} - {active_crop.get('nitrogen_optimal', 'N/A')} mg/kg
+- Phosphorus Required: {active_crop.get('phosphorus_min', 'N/A')} - {active_crop.get('phosphorus_optimal', 'N/A')} mg/kg
+- Potassium Required: {active_crop.get('potassium_min', 'N/A')} - {active_crop.get('potassium_optimal', 'N/A')} mg/kg
 
-    if sensor_data:
-        sensor_context = f"""
-LIVE SENSOR DATA (from field):
-- Temperature: {sensor_data.get('air_temperature', sensor_data.get('temperature', 'N/A'))} °C
-- Humidity: {sensor_data.get('humidity', 'N/A')} %
-- Soil Moisture: {sensor_data.get('soil_moisture_percentage', sensor_data.get('soil_moisture', 'N/A'))} %
-- Soil Temperature: {sensor_data.get('soil_temperature', sensor_data.get('soilTemperature', 'N/A'))} °C
-- Atmospheric Pressure: {sensor_data.get('pressure', sensor_data.get('atm_pressure', 'N/A'))} hPa
-- Nitrogen (N): {sensor_data.get('nitrogen', sensor_data.get('N', 'N/A'))} mg/kg
-- Phosphorus (P): {sensor_data.get('phosphorus', sensor_data.get('P', 'N/A'))} mg/kg
-- Potassium (K): {sensor_data.get('potassium', sensor_data.get('K', 'N/A'))} mg/kg
 """
     else:
         sensor_context = "\nNo live sensor data available.\n"
