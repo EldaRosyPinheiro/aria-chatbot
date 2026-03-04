@@ -47,12 +47,12 @@ ACTIVE CROP INFORMATION:
     if sensor_data:
         sensor_context = f"""
 LIVE SENSOR DATA (from field):
-- Temperature: {sensor_data.get('temperature', 'N/A')} °C
+- Temperature: {sensor_data.get('air_temperature', sensor_data.get('temperature', 'N/A'))} °C
 - Humidity: {sensor_data.get('humidity', 'N/A')} %
-- Soil Moisture: {sensor_data.get('soilMoisture', sensor_data.get('soil_moisture', 'N/A'))} %
-- Soil Temperature: {sensor_data.get('soilTemperature', sensor_data.get('soil_temp', 'N/A'))} °C
+- Soil Moisture: {sensor_data.get('soil_moisture_percentage', sensor_data.get('soil_moisture', 'N/A'))} %
+- Soil Temperature: {sensor_data.get('soil_temperature', sensor_data.get('soilTemperature', 'N/A'))} °C
 - pH Level: {sensor_data.get('ph', sensor_data.get('pH', 'N/A'))}
-- Atmospheric Pressure: {sensor_data.get('pressure', 'N/A')} hPa
+- Atmospheric Pressure: {sensor_data.get('pressure', sensor_data.get('atm_pressure', 'N/A'))} hPa
 - Nitrogen (N): {sensor_data.get('nitrogen', sensor_data.get('N', 'N/A'))} mg/kg
 - Phosphorus (P): {sensor_data.get('phosphorus', sensor_data.get('P', 'N/A'))} mg/kg
 - Potassium (K): {sensor_data.get('potassium', sensor_data.get('K', 'N/A'))} mg/kg
