@@ -33,7 +33,7 @@ def build_system_prompt(active_crop: dict = None, sensor_data: dict = None) -> s
     sensor_context = ""
 
     if active_crop:
-    crop_context = f"""
+        crop_context = f"""
 ACTIVE CROP INFORMATION:
 - Crop Name: {active_crop.get('name', 'Unknown')}
 - Growth Duration: {active_crop.get('growthDuration', 'Unknown')} days
@@ -192,4 +192,3 @@ async def text_to_speech(req: TTSRequest):
 @app.get("/health")
 def health():
     return {"status": "healthy"}
-    
