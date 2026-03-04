@@ -128,7 +128,6 @@ function updateSensorUI(data) {
 set("s-hum",      "humidity",                 "hum",           " %");
 set("s-soil",     "soil_moisture_percentage",  "soil_moisture", " %");
 set("s-soiltemp", "soil_temperature",          "soilTemp",      " °C");
-set("s-ph",       "ph",                        "pH",            "");
 set("s-pressure", "pressure",                  "atm_pressure",  " hPa");
 set("s-n",        "nitrogen",                  "N",             " mg/kg");
 set("s-p",        "phosphorus",                "P",             " mg/kg");
@@ -142,7 +141,6 @@ function getWarningColor(key, val) {
     humidity:        { min: 30,  max: 90  },
     soilMoisture:    { min: 20,  max: 80  },
     soilTemperature: { min: 10,  max: 35  },
-    ph:              { min: 5.5, max: 7.5 },
     nitrogen:        { min: 10,  max: 280 },
     phosphorus:      { min: 5,   max: 200 },
     potassium:       { min: 10,  max: 300 },
