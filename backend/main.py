@@ -146,16 +146,26 @@ def build_system_prompt(
         + all_crops_context
         + sensor_context
         + weather_context
-        + "\nINSTRUCTIONS:\n"
-        "1. ALWAYS detect the language the user writes in.\n"
-        "2. ALWAYS reply in the EXACT same language the user used (Malayalam or English).\n"
-        "3. When sensor data is available, USE the actual numbers in your advice.\n"
-        "4. When active crop info is available, tailor answers for that crop.\n"
-        "5. When asked about any crop, use the ALL AVAILABLE CROPS data.\n"
-        "6. When asked about weather, use the WEATHER DATA above — never say data is unavailable if it is provided.\n"
-        "7. If sensor values are abnormal, WARN the farmer and suggest fixes.\n"
-        "8. Keep responses under 150 words. Use bullet points.\n"
-        "9. Always prioritize the farmer's crop health and yield.\n"
+        + "\nLANGUAGE RULES (CRITICAL — follow strictly):\n"
+        "1. ALWAYS detect the language of the user's LATEST message only.\n"
+        "2. Reply in the EXACT same language the user used:\n"
+        "   - English text → reply ONLY in English\n"
+        "   - Malayalam script (മലയാളം) → reply ONLY in Malayalam\n"
+        "   - Hindi script (हिंदी) → reply ONLY in Hindi\n"
+        "   - Tamil script (தமிழ்) → reply ONLY in Tamil\n"
+        "   - Telugu script (తెలుగు) → reply ONLY in Telugu\n"
+        "3. NEVER switch languages unless the user switches first.\n"
+        "4. DEFAULT language is English if detection is uncertain.\n"
+        "5. Do NOT mix languages in the same response.\n"
+        "6. Use natural, simple language a farmer can understand.\n"
+        "\nFARMING INSTRUCTIONS:\n"
+        "7. When sensor data is available, USE the actual numbers in your advice.\n"
+        "8. When active crop info is available, tailor answers for that specific crop.\n"
+        "9. When asked about any crop, use the ALL AVAILABLE CROPS data.\n"
+        "10. When asked about weather, use the WEATHER DATA above — never say data is unavailable if it is provided.\n"
+        "11. If sensor values are abnormal, WARN the farmer and suggest fixes.\n"
+        "12. Keep responses under 150 words. Use bullet points.\n"
+        "13. Always prioritize the farmer's crop health and yield.\n"
     )
 
 
@@ -226,16 +236,22 @@ def clear_session(session_id: str):
     return {"status": "cleared"}
 
 
-# ── Language Detection ─────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# LANGUAGE DETECTION
+# ══════════════════════════════════════════════════════════════
+
 def detect_language(text: str) -> str:
-    if re.search(r'[\u0D00-\u0D7F]', text): return 'ml'
-    if re.search(r'[\u0900-\u097F]', text): return 'hi'
-    if re.search(r'[\u0B80-\u0BFF]', text): return 'ta'
-    if re.search(r'[\u0C00-\u0C7F]', text): return 'te'
-    return 'en'
+    if re.search(r'[\u0D00-\u0D7F]', text): return 'ml'  # Malayalam
+    if re.search(r'[\u0900-\u097F]', text): return 'hi'  # Hindi
+    if re.search(r'[\u0B80-\u0BFF]', text): return 'ta'  # Tamil
+    if re.search(r'[\u0C00-\u0C7F]', text): return 'te'  # Telugu
+    return 'en'                                           # English (default)
 
 
-# ── TTS ────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# TTS — supports all 5 languages
+# ══════════════════════════════════════════════════════════════
+
 @app.post("/tts")
 async def text_to_speech(req: TTSRequest):
     try:
@@ -249,7 +265,10 @@ async def text_to_speech(req: TTSRequest):
         return {"error": str(e)}
 
 
-# ── Health / Ping ──────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+# HEALTH / PING
+# ══════════════════════════════════════════════════════════════
+
 @app.get("/health")
 @app.get("/ping")
 def health():
