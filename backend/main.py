@@ -10,6 +10,7 @@ import os
 import uuid
 import io
 import re
+
 load_dotenv()
 
 app = FastAPI(title="ARIA — Cropizide Voice Assistant")
@@ -157,14 +158,19 @@ def build_system_prompt(
         "4. DEFAULT language is English if detection is uncertain.\n"
         "5. Do NOT mix languages in the same response.\n"
         "6. Use natural, simple language a farmer can understand.\n"
+        "\nFORMATTING RULES (CRITICAL):\n"
+        "7. NEVER use asterisks (*) or double asterisks (**) anywhere in your response.\n"
+        "8. NEVER use markdown bold or italic formatting.\n"
+        "9. Use plain dash (-) for bullet points only.\n"
+        "10. Use plain text only — no special characters for emphasis.\n"
         "\nFARMING INSTRUCTIONS:\n"
-        "7. When sensor data is available, USE the actual numbers in your advice.\n"
-        "8. When active crop info is available, tailor answers for that specific crop.\n"
-        "9. When asked about any crop, use the ALL AVAILABLE CROPS data.\n"
-        "10. When asked about weather, use the WEATHER DATA above — never say data is unavailable if it is provided.\n"
-        "11. If sensor values are abnormal, WARN the farmer and suggest fixes.\n"
-        "12. Keep responses under 150 words. Use bullet points.\n"
-        "13. Always prioritize the farmer's crop health and yield.\n"
+        "11. When sensor data is available, USE the actual numbers in your advice.\n"
+        "12. When active crop info is available, tailor answers for that specific crop.\n"
+        "13. When asked about any crop, use the ALL AVAILABLE CROPS data.\n"
+        "14. When asked about weather, use the WEATHER DATA above — never say data is unavailable if it is provided.\n"
+        "15. If sensor values are abnormal, WARN the farmer and suggest fixes.\n"
+        "16. Keep responses under 150 words. Use bullet points with dash (-).\n"
+        "17. Always prioritize the farmer's crop health and yield.\n"
     )
 
 
@@ -220,6 +226,10 @@ async def chat(req: ChatRequest):
             temperature = 0.7,
         )
         reply = response.choices[0].message.content
+
+        # Strip any asterisks that slip through
+        reply = reply.replace("**", "").replace("*", "")
+
         sessions[sid]["history"].append({"role": "user",      "content": req.message})
         sessions[sid]["history"].append({"role": "assistant", "content": reply})
         return {"reply": reply, "session_id": sid, "status": "ok"}
