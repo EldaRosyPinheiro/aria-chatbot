@@ -14,7 +14,7 @@ const FIREBASE_MAIN_CONFIG = {
 
 // Cropizide main RTDB — stores user data and activeCrop
 const FIREBASE_CROPIZIDE_CONFIG = {
-  apiKey:      "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
+  apiKey:      "AIzaSyC7SQKJgXcE4glap7K4L6XTO6o3AwN3Yik",
   projectId:   "cropizide-53cc5",
   databaseURL: "https://cropizide-53cc5-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
