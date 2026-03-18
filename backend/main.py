@@ -10,7 +10,6 @@ import os
 import uuid
 import io
 import re
-
 load_dotenv()
 
 app = FastAPI(title="ARIA — Cropizide Voice Assistant")
