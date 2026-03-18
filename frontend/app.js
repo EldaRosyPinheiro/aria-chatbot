@@ -6,30 +6,21 @@
 const API_BASE = "https://https-github-com-eldarosypinheiro-aria.onrender.com";
 
 // ── Firebase Configs ───────────────────────────────────────────
-
-// Sensor RTDB — live sensor readings
 const FIREBASE_MAIN_CONFIG = {
   apiKey:      "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
-  projectId:   "sensor-datas-c8ff3",
+  projectId:   "cropizide-53cc5",
   databaseURL: "https://sensor-datas-c8ff3-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-// Cropizide main app — user data, activeCrop, Firestore crops
+// Cropizide main RTDB — stores user data and activeCrop
 const FIREBASE_CROPIZIDE_CONFIG = {
-  apiKey:            "AIzaSyC7SQKJgXcE4glap7K4L6XTO6o3AwN3Yik",
-  authDomain:        "cropizide-53cc5.firebaseapp.com",
-  projectId:         "cropizide-53cc5",
-  storageBucket:     "cropizide-53cc5.firebasestorage.app",
-  messagingSenderId: "914171803917",
-  appId:             "1:914171803917:web:22f82fa7c0cf742d705844",
-  databaseURL:       "https://cropizide-53cc5-default-rtdb.asia-southeast1.firebasedatabase.app"
+  apiKey:      "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
+  projectId:   "cropizide-53cc5",
+  databaseURL: "https://cropizide-53cc5-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
-// Weather RTDB
 const FIREBASE_WEATHER_CONFIG = {
-  apiKey:      "AIzaSyDIZlgvJk7dIyuzIQWuHKusv5ZcBbvHi_8",
-  authDomain:  "weatherdatas.firebaseapp.com",
-  projectId:   "weatherdatas",
+  apiKey:      "AIzaSyD9Zt3RyCokRdj3qYgex9PCxniYualPcJ0",
   databaseURL: "https://weatherdatas-default-rtdb.asia-southeast1.firebasedatabase.app/"
 };
 
@@ -39,11 +30,11 @@ let isListening  = false;
 let recognition  = null;
 let activeCrop   = null;
 let sensorData   = null;
-let allCrops     = [];
-let weatherData  = null;
-let mainDb       = null;
-let cropizideDb  = null;
-let weatherDb    = null;
+let allCrops     = [];      // all crops from Firestore
+let weatherData  = null;    // weather from weatherdatas RTDB
+let mainDb       = null;   // sensor RTDB
+let cropizideDb  = null;   // cropizide main RTDB (user data + activeCrop)
+let weatherDb    = null;   // weather RTDB
 
 // ── DOM Refs ───────────────────────────────────────────────────
 const chatBox       = document.getElementById("chat-box");
@@ -65,31 +56,14 @@ function goBack() {
   else window.location.href = "/chatbot";
 }
 
-// ── Phone key normalizer (matches Cropizide's phoneToKey) ──────
-function phoneToKey(phone) {
-  return phone.replace(/[^+0-9]/g, "");
-}
-
 // ── Init ───────────────────────────────────────────────────────
 async function init() {
   loadUserFromURL();
   setupSpeechRecognition();
-  initFirebase();
-  await waitForCropizideDb();
-  await loadActiveCrop();
+  initFirebase();              // sets up cropizideDb, mainDb, weatherDb
+  await loadActiveCrop();      // reads activeCrop from cropizide RTDB
   await createSession();
   showWelcome();
-}
-
-// ── Wait for cropizideDb to be ready ──────────────────────────
-function waitForCropizideDb() {
-  return new Promise((resolve) => {
-    if (cropizideDb) { resolve(); return; }
-    const check = setInterval(() => {
-      if (cropizideDb) { clearInterval(check); resolve(); }
-    }, 100);
-    setTimeout(() => { clearInterval(check); resolve(); }, 5000);
-  });
 }
 
 // ── Read user param from URL ───────────────────────────────────
@@ -99,27 +73,28 @@ function loadUserFromURL() {
   if (user) localStorage.setItem("currentUserPhone", user);
 }
 
-// ── Load Active Crop from Cropizide RTDB ──────────────────────
+// ── Load Active Crop from localStorage ────────────────────────
 async function loadActiveCrop() {
   try {
+    // Get phone from URL param or localStorage
     const params = new URLSearchParams(window.location.search);
-    const rawPhone = params.get("user") || localStorage.getItem("currentUserPhone");
+    const phone  = params.get("user") || localStorage.getItem("currentUserPhone");
 
-    if (!rawPhone) {
+    if (!phone) {
       console.warn("No user phone — cannot load active crop");
       updateCropUI();
       return;
     }
 
-    const phone = phoneToKey(rawPhone);
-    console.log("Loading activeCrop for phone:", phone);
-    console.log("Firebase path: users/" + phone + "/activeCrop");
+    // Wait for cropizideDb if not ready yet
+    if (!cropizideDb) {
+      setTimeout(loadActiveCrop, 500);
+      return;
+    }
 
     const snap = await cropizideDb.ref(`users/${phone}/activeCrop`).once("value");
-    console.log("activeCrop snap exists:", snap.exists());
-    console.log("activeCrop value:", snap.val());
-
     activeCrop = snap.val();
+    console.log("Active crop from RTDB:", activeCrop?.name || "none");
     updateCropUI();
   } catch(e) {
     console.error("Active crop load error:", e);
@@ -130,8 +105,6 @@ async function loadActiveCrop() {
 
 function updateCropUI() {
   const cropInfo = document.getElementById("cropInfo");
-  if (!cropInfo) return;
-
   if (activeCrop) {
     cropInfo.className = "context-info active";
     cropInfo.innerHTML = `
@@ -153,22 +126,20 @@ function updateCropUI() {
 // ── Firebase Init ──────────────────────────────────────────────
 function initFirebase() {
   try {
-    // Sensor RTDB
+    // Main app (sensors + Firestore crops)
     const mainApp = firebase.apps.find(a => a.name === "main")
       || firebase.initializeApp(FIREBASE_MAIN_CONFIG, "main");
     mainDb = firebase.database(mainApp);
 
-    // Cropizide main app (user data + activeCrop + Firestore)
+    // Cropizide main RTDB (user data + activeCrop)
     const cropizideApp = firebase.apps.find(a => a.name === "cropizide")
       || firebase.initializeApp(FIREBASE_CROPIZIDE_CONFIG, "cropizide");
     cropizideDb = firebase.database(cropizideApp);
 
     // Firestore for crops
-    const firestore = (typeof firebase.firestore === "function")
-      ? firebase.firestore(cropizideApp)
-      : null;
+    const firestore = firebase.firestore ? firebase.firestore(mainApp) : null;
 
-    // Weather RTDB
+    // Weather app (separate RTDB)
     const weatherApp = firebase.apps.find(a => a.name === "weather")
       || firebase.initializeApp(FIREBASE_WEATHER_CONFIG, "weather");
     weatherDb = firebase.database(weatherApp);
@@ -180,35 +151,33 @@ function initFirebase() {
         const key  = Object.keys(data)[0];
         sensorData = data[key];
         updateSensorUI(sensorData);
-        const el = document.getElementById("sensorStatus");
-        if (el) el.textContent = "✅ Live — updated just now";
+        document.getElementById("sensorStatus").textContent = "✅ Live — updated just now";
       } else {
-        const el = document.getElementById("sensorStatus");
-        if (el) el.textContent = "⚠️ No sensor data found";
+        document.getElementById("sensorStatus").textContent = "⚠️ No sensor data found";
       }
     });
 
     // ── Weather listener ───────────────────────────────────────
-    weatherDb.ref("/weather/data").once("value", (snap) => {
-      const historical = snap.val();
-      weatherDb.ref("/weather/forecast").once("value", (snap2) => {
-        const forecast = snap2.val();
-        weatherData = { historical, forecast };
-        console.log("✅ Weather loaded — historical:", !!historical, "forecast:", !!forecast);
-      });
-    });
+   // ── Weather listener ───────────────────────────────────────────
+weatherDb.ref("/weather/data").once("value", (snap) => {
+  const historical = snap.val();
+  weatherDb.ref("/weather/forecast").once("value", (snap2) => {
+    const forecast = snap2.val();
+    weatherData = { historical, forecast };
+    console.log("✅ Weather loaded — historical:", !!historical, "forecast:", !!forecast);
+  });
+});
 
     // ── Load all crops from Firestore ──────────────────────────
     if (firestore) {
       loadAllCrops(firestore);
     } else {
-      console.warn("Firestore not available");
+      console.warn("Firestore not available — add firebase-firestore-compat.js to index.html");
     }
 
   } catch(e) {
     console.error("Firebase error:", e);
-    const el = document.getElementById("sensorStatus");
-    if (el) el.textContent = "⚠️ Firebase connection failed";
+    document.getElementById("sensorStatus").textContent = "⚠️ Firebase connection failed";
   }
 }
 
@@ -236,14 +205,14 @@ function updateSensorUI(data) {
     el.style.color = val !== null ? getWarningColor(key1, val) : "rgba(255,255,255,0.4)";
   };
 
-  set("s-temp",     "air_temperature",          "temperature",     " °C");
-  set("s-hum",      "humidity",                 "hum",             " %");
-  set("s-soil",     "soil_moisture_percentage", "soil_moisture",   " %");
-  set("s-soiltemp", "soil_temperature",          "soilTemperature", " °C");
-  set("s-pressure", "pressure",                 "atm_pressure",    " hPa");
-  set("s-n",        "nitrogen",                 "N",               " mg/kg");
-  set("s-p",        "phosphorus",               "P",               " mg/kg");
-  set("s-k",        "potassium",                "K",               " mg/kg");
+  set("s-temp",     "air_temperature",           "temperature",    " °C");
+  set("s-hum",      "humidity",                  "hum",            " %");
+  set("s-soil",     "soil_moisture_percentage",  "soil_moisture",  " %");
+  set("s-soiltemp", "soil_temperature",           "soilTemperature"," °C");
+  set("s-pressure", "pressure",                  "atm_pressure",   " hPa");
+  set("s-n",        "nitrogen",                  "N",              " mg/kg");
+  set("s-p",        "phosphorus",                "P",              " mg/kg");
+  set("s-k",        "potassium",                 "K",              " mg/kg");
 }
 
 function getWarningColor(key, val) {
@@ -334,8 +303,8 @@ async function sendMessage(text) {
         message:      text,
         active_crop:  activeCrop,
         sensor_data:  sensorData,
-        all_crops:    allCrops,
-        weather_data: weatherData
+        all_crops:    allCrops,       // ← all crops from Firestore
+        weather_data: weatherData     // ← weather from RTDB
       }),
     });
 
@@ -404,7 +373,6 @@ function appendTyping() {
   chatBox.scrollTop = chatBox.scrollHeight;
   return id;
 }
-
 function removeTyping(id) { document.getElementById(id)?.remove(); }
 
 // ── TTS ────────────────────────────────────────────────────────
@@ -482,7 +450,7 @@ async function clearConversation() {
 
 // ── Helpers ────────────────────────────────────────────────────
 function setStatus(type, msg) { statusDot.className = `status-dot ${type}`; connStatus.textContent = msg; }
-function setAriaStatus(msg)   { if (ariaStatus) ariaStatus.textContent = msg; }
+function setAriaStatus(msg)   { ariaStatus.textContent = msg; }
 function autoResizeTextarea() { userInput.style.height = "auto"; userInput.style.height = Math.min(userInput.scrollHeight, 120) + "px"; }
 
 // ── Events ─────────────────────────────────────────────────────
